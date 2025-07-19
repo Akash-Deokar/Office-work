@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        padding: 20px;
+      }
+      label {
+        font-weight: bold;
+      }
+      input, select, textarea {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .entry-group {
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Leave Request Form</h2>
+
+    <form id="leaveForm">
+      <label>Email:</label>
+      <input type="email" id="email" name="email" readonly>
+
+      <label>Employee ID:</label>
+      <input type="text" id="employeeId" required>
+
+      <label>Name:</label>
+      <input type="text" id="name" required>
+
+      <div id="leaveEntries">
+        <div class="entry-group">
+          <label>Leave Date:</label>
+          <input type="date" name="leaveDate" required>
+          <label>Reason:</label>
+          <textarea name="reason" rows="2" required></textarea>
+        </div>
+      </div>
+
+      <button type="button" onclick="addEntry()">+ Add More Days</button>
+      <br><br>
+      <button type="submit">Submit</button>
+    </form>
+
+    <p id="response"></p>
+
+    <script>
+      let userEmail = '';
+
+      function addEntry() {
+        const container = document.getElementById("leaveEntries");
+        const div = document.createElement("div");
+        div.className = "entry-group";
+        div.innerHTML = `
+          <label>Leave Date:</label>
+          <input type="date" name="leaveDate" required>
+          <label>Reason:</label>
+          <textarea name="reason" rows="2" required></textarea>
+        `;
+        container.appendChild(div);
+      }
+
+      document.addEventListener("DOMContentLoaded", function() {
+        google.script.run.withSuccessHandler(function(user) {
+          document.getElementById("email").value = user.email;
+          userEmail = user.email;
+        }).getUserInfo();
+      });
+
+      document.getElementById("leaveForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        const entries = [];
+        const dates = document.getElementsByName("leaveDate");
+        const reasons = document.getElementsByName("reason");
+
+        for (let i = 0; i < dates.length; i++) {
+          if (dates[i].value && reasons[i].value) {
+            entries.push({
+              date: dates[i].value,
+              reason: reasons[i].value
+            });
+          }
+        }
+
+        const formData = {
+          email: document.getElementById("email").value,
+          employeeId: document.getElementById("employeeId").value,
+          name: document.getElementById("name").value,
+          leaves: entries
+        };
+
+        google.script.run.withSuccessHandler(function(msg) {
+          document.getElementById("response").innerText = msg;
+          document.getElementById("leaveForm").reset();
+        }).submitLeave(formData);
+      });
+    </script>
+  </body>
+</html>
