@@ -1,0 +1,2 @@
+Jul 19, 2025, 10:42:43 AM	Error	Exception: Specified permissions are not sufficient to call MailApp.sendEmail. Required permissions: https://www.googleapis.com/auth/script.send_mail
+    at onEdit(Code:65:15)
