@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      input, textarea, button { margin: 8px 0; display: block; width: 100%; max-width: 400px; }
+      label { font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <h2>Leave Request Form</h2>
+    <form id="leaveForm">
+      <label>Email: <input type="email" name="email" readonly required></label>
+      <label>Employee ID: <input type="text" name="employeeId" required></label>
+      <label>Name: <input type="text" name="name" readonly required></label>
+      <label>Reason for Leave: <textarea name="reason" required></textarea></label>
+
+      <div id="dateContainer">
+        <label>Leave Date: <input type="date" name="leaveDate" required></label>
+      </div>
+
+      <button type="button" onclick="addDate()">+ Add Another Date</button>
+      <br>
+      <input type="submit" value="Submit Leave Request">
+    </form>
+
+    <p id="status" style="font-weight: bold;"></p>
+
+    <script>
+      // Auto-fill email and name
+      window.onload = function () {
+        google.script.run.withSuccessHandler(function(user) {
+          document.querySelector('input[name="email"]').value = user.email;
+          document.querySelector('input[name="name"]').value = user.name;
+        }).getUserInfo();
+      };
+
+      // Add new date input field
+      function addDate() {
+        const container = document.getElementById('dateContainer');
+        const newInput = document.createElement('input');
+        newInput.type = 'date';
+        newInput.name = 'leaveDate';
+        newInput.required = true;
+        container.appendChild(newInput);
+      }
+
+      // Submit the form
+      document.getElementById('leaveForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = {
+          email: form.email.value,
+          employeeId: form.employeeId.value,
+          name: form.name.value,
+          reason: form.reason.value,
+          leaveDates: Array.from(form.querySelectorAll('input[name="leaveDate"]')).map(d => d.value)
+        };
+
+        google.script.run.withSuccessHandler(msg => {
+          document.getElementById('status').textContent = msg;
+          form.reset();
+          document.getElementById('dateContainer').innerHTML = '<label>Leave Date: <input type="date" name="leaveDate" required></label>';
+        }).submitLeave(formData);
+      });
+    </script>
+  </body>
+</html>
