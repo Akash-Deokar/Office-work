@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body { font-family: Arial; margin: 40px; background: #f9f9f9; }
+      .form-container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 600px; margin: auto; }
+      h2 { text-align: center; color: #333; }
+      input, textarea, button { margin-top: 10px; margin-bottom: 15px; padding: 10px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 6px; }
+      label { font-weight: bold; }
+      .leave-entry { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; align-items: center; }
+      .entry-container { margin-top: 10px; margin-bottom: 20px; }
+      #addRow { background: #2196F3; color: white; border: none; cursor: pointer; }
+      #addRow:hover { background: #0b7dda; }
+      #submitBtn { background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+      #submitBtn:hover { background-color: #45a049; }
+      #status { text-align: center; font-weight: bold; color: green; }
+    </style>
+  </head>
+  <body>
+    <div class="form-container">
+      <h2>Leave Request Form</h2>
+      <form id="leaveForm">
+        <label>Email:</label>
+        <input type="email" name="email" readonly required>
+        
+        <label>Employee ID:</label>
+        <input type="text" name="employeeId" required>
+        
+        <label>Name:</label>
+        <input type="text" name="name" readonly required>
+        
+        <div class="entry-container" id="leaveEntries">
+          <div class="leave-entry">
+            <input type="date" name="leaveDate" required>
+            <input type="text" name="reason" placeholder="Reason for leave" required>
+          </div>
+        </div>
+
+        <button type="button" id="addRow">+ Add Another Leave Date</button>
+        <input type="submit" id="submitBtn" value="Submit Leave Request">
+      </form>
+      <p id="status"></p>
+    </div>
+
+    <script>
+      window.onload = function() {
+        google.script.run.withSuccessHandler(user => {
+          document.querySelector('input[name="email"]').value = user.email;
+          document.querySelector('input[name="name"]').value = user.name;
+        }).getUserInfo();
+      };
+
+      document.getElementById('addRow').onclick = function() {
+        const c = document.getElementById('leaveEntries');
+        const d = document.createElement('div');
+        d.className = 'leave-entry';
+        d.innerHTML = `
+          <input type="date" name="leaveDate" required>
+          <input type="text" name="reason" placeholder="Reason for leave" required>`;
+        c.appendChild(d);
+      };
+
+      document.getElementById('leaveForm').onsubmit = function(e) {
+        e.preventDefault();
+        const f = e.target;
+        const dates = f.querySelectorAll('input[name="leaveDate"]');
+        const reasons = f.querySelectorAll('input[name="reason"]');
+        const leaves = [];
+        for (let i = 0; i < dates.length; i++) {
+          if (dates[i].value && reasons[i].value) {
+            leaves.push({ date: dates[i].value, reason: reasons[i].value });
+          }
+        }
+        if (leaves.length === 0) return alert("Add at least one leave date.");
+
+        google.script.run.withSuccessHandler(msg => {
+          document.getElementById('status').textContent = msg;
+          setTimeout(() => {
+            f.reset();
+            document.getElementById('leaveEntries').innerHTML = `
+              <div class="leave-entry">
+                <input type="date" name="leaveDate" required>
+                <input type="text" name="reason" placeholder="Reason for leave" required>
+              </div>`;
+            document.getElementById('status').textContent = '';
+          }, 1500);
+        }).submitLeave({
+          email: f.email.value,
+          employeeId: f.employeeId.value,
+          name: f.name.value,
+          leaves
+        });
+      };
+    </script>
+  </body>
+</html>
